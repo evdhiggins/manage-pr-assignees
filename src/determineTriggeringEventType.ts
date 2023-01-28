@@ -2,15 +2,18 @@ import type { Context } from '@actions/github/lib/context';
 
 export type TriggeringEventType = 'review-requested' | 'review-submitted' | 'other';
 
-export function determineTriggeringEventType(
-    context: Pick<Context, 'eventName' | 'action'>,
-): TriggeringEventType {
-    const { eventName, action } = context;
-    if (eventName === 'pull_request' && action === 'review_requested') {
-        return 'review-requested';
-    }
-    if (eventName === 'pull_request_review' && action === 'submitted') {
-        return 'review-submitted';
-    }
+type ContextInput = Pick<Context, 'eventName' | 'action'>;
+
+export function determineTriggeringEventType(context: ContextInput): TriggeringEventType {
+    if (isReviewRequested(context)) return 'review-requested';
+    if (isReviewSubmitted(context)) return 'review-submitted';
     return 'other';
+}
+
+function isReviewRequested({ eventName, action }: ContextInput): boolean {
+    return eventName === 'pull_request' && action === 'review_requested';
+}
+
+function isReviewSubmitted({ eventName, action }: ContextInput): boolean {
+    return eventName === 'pull_request_review' && action === 'submitted';
 }

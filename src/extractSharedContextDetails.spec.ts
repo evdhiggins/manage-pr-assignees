@@ -2,7 +2,7 @@ import { MissingSharedContextDetailsError } from './errors';
 import {
     extractSharedContextDetails,
     SharedContextDetails,
-    SharedContextInputs,
+    ContextInput,
 } from './extractSharedContextDetails';
 
 //
@@ -21,7 +21,7 @@ const expectedOutputForMocks: SharedContextDetails = {
 
 const makeMockInputWithOptionalOverrides = (
     input: { [K in keyof SharedContextDetails]+?: unknown } = {},
-): SharedContextInputs =>
+): ContextInput =>
     ({
         repo: {
             repo: 'repo' in input ? input.repo : mockRepoName,

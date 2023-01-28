@@ -1,19 +1,30 @@
-import * as core from '@actions/core'
-import {wait} from './wait'
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { determineAssigneesForPrAndThrowIfNoOwner } from './determineAssigneesForPrAndThrowIfNoOwner';
+import { determineTriggeringEventType } from './determineTriggeringEventType';
+import { extractSharedContextDetails } from './extractSharedContextDetails';
+import { getTokenFromCoreOrThrow } from './getTokenFromCoreOrThrow';
 
-async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+export async function main(): Promise<void> {
+    try {
+        const event = determineTriggeringEventType(github.context);
+        if (event === 'other') return;
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+        const token = getTokenFromCoreOrThrow(core);
+        const sharedContextDetails = extractSharedContextDetails(github.context);
 
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
-  }
+        const octokit = github.getOctokit(token);
+        const prResponse = await octokit.request(`GET /repos/{owner}/{repo}/pulls/{pull_number}`, {
+            ...sharedContextDetails,
+        });
+        const assignees = determineAssigneesForPrAndThrowIfNoOwner(prResponse.data, event);
+        await octokit.request(`POST /repos/{owner}/{repo}/pulls/{pull_number}/assignees`, {
+            ...sharedContextDetails,
+            assignees,
+        });
+    } catch (error) {
+        if (error instanceof Error) core.setFailed(error.message);
+    }
 }
 
-run()
+void main();

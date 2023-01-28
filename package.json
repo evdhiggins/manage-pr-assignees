@@ -1,6 +1,6 @@
 {
     "name": "@evdhiggins/manage-pr-assignee",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "private": true,
     "description": "A github action that manages the assignee of a PR in reaction to review requests & submissions",
     "main": "lib/main.js",

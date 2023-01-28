@@ -11,4 +11,11 @@ A simple GitHub action that will change the assignees of a PR in two situations:
 2. A review is submitted by a user
     - All other users for which there are outstanding review requests will be assigned to the PR; the PR creator will be assigned to the PR.
 
-If these flows don't match the use-case that you're hoping to solve, than it's likely not for you!
+## Usage Example
+
+```yml
+- uses: evdhiggins/manage-pr-assignee@v1
+  with:
+      #github access token.
+      token: ${{ secrets.GITHUB_TOKEN }}
+```

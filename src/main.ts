@@ -8,6 +8,9 @@ import { getTokenFromCoreOrThrow } from './getTokenFromCoreOrThrow';
 export async function main(): Promise<void> {
     try {
         const event = determineTriggeringEventType(github.context);
+        console.info(
+            `Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.action})`,
+        );
         if (event === 'other') return;
 
         const token = getTokenFromCoreOrThrow(core);
@@ -18,12 +21,18 @@ export async function main(): Promise<void> {
             ...sharedContextDetails,
         });
         const assignees = determineAssigneesForPrAndThrowIfNoCreator(prResponse.data, event);
+        console.info(
+            `Updating PR ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${
+                sharedContextDetails.pull_number
+            } to have the following assignees: ${assignees.join(`, `)}`,
+        );
         await octokit.request(`POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`, {
             ...sharedContextDetails,
             issue_number: sharedContextDetails.pull_number,
             assignees,
         });
     } catch (error) {
+        console.error(error);
         if (error instanceof Error) core.setFailed(error.message);
     }
 }

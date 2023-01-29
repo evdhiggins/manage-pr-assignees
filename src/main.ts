@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { determineAssigneesForPrAndThrowIfNoOwner } from './determineAssigneesForPrAndThrowIfNoOwner';
+import { determineAssigneesForPrAndThrowIfNoCreator } from './determineAssigneesForPrAndThrowIfNoCreator';
 import { determineTriggeringEventType } from './determineTriggeringEventType';
 import { extractSharedContextDetails } from './extractSharedContextDetails';
 import { getTokenFromCoreOrThrow } from './getTokenFromCoreOrThrow';
@@ -17,9 +17,10 @@ export async function main(): Promise<void> {
         const prResponse = await octokit.request(`GET /repos/{owner}/{repo}/pulls/{pull_number}`, {
             ...sharedContextDetails,
         });
-        const assignees = determineAssigneesForPrAndThrowIfNoOwner(prResponse.data, event);
-        await octokit.request(`POST /repos/{owner}/{repo}/pulls/{pull_number}/assignees`, {
+        const assignees = determineAssigneesForPrAndThrowIfNoCreator(prResponse.data, event);
+        await octokit.request(`POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`, {
             ...sharedContextDetails,
+            issue_number: sharedContextDetails.pull_number,
             assignees,
         });
     } catch (error) {

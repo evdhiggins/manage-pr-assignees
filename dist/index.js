@@ -1,23 +1,23 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 8424:
+/***/ 5198:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.determineAssigneesForPrAndThrowIfNoOwner = void 0;
+exports.determineAssigneesForPrAndThrowIfNoCreator = void 0;
 const errors_1 = __nccwpck_require__(9062);
-function determineAssigneesForPrAndThrowIfNoOwner(pr, event) {
+function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
     if (!pr.user)
-        throw new errors_1.NoPrOwnerFoundError(pr.number);
+        throw new errors_1.NoPullRequestCreatorFoundError(pr.number);
     const assignees = pr.requested_reviewers?.map(r => r.login) ?? [];
     if (event === 'review-submitted')
         assignees.push(pr.user.login);
     return assignees;
 }
-exports.determineAssigneesForPrAndThrowIfNoOwner = determineAssigneesForPrAndThrowIfNoOwner;
+exports.determineAssigneesForPrAndThrowIfNoCreator = determineAssigneesForPrAndThrowIfNoCreator;
 
 
 /***/ }),
@@ -81,19 +81,19 @@ exports.MissingTokenError = MissingTokenError;
 
 /***/ }),
 
-/***/ 8718:
+/***/ 712:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.NoPrOwnerFoundError = void 0;
-class NoPrOwnerFoundError extends Error {
+exports.NoPullRequestCreatorFoundError = void 0;
+class NoPullRequestCreatorFoundError extends Error {
     constructor(prNumber) {
-        super(`No owner/creator for PR #${prNumber} could be found`);
+        super(`The creator of PR #${prNumber} could be found`);
     }
 }
-exports.NoPrOwnerFoundError = NoPrOwnerFoundError;
+exports.NoPullRequestCreatorFoundError = NoPullRequestCreatorFoundError;
 
 
 /***/ }),
@@ -120,7 +120,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 __exportStar(__nccwpck_require__(5621), exports);
 __exportStar(__nccwpck_require__(1925), exports);
-__exportStar(__nccwpck_require__(8718), exports);
+__exportStar(__nccwpck_require__(712), exports);
 
 
 /***/ }),
@@ -207,7 +207,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.main = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const determineAssigneesForPrAndThrowIfNoOwner_1 = __nccwpck_require__(8424);
+const determineAssigneesForPrAndThrowIfNoCreator_1 = __nccwpck_require__(5198);
 const determineTriggeringEventType_1 = __nccwpck_require__(3077);
 const extractSharedContextDetails_1 = __nccwpck_require__(5558);
 const getTokenFromCoreOrThrow_1 = __nccwpck_require__(1773);
@@ -222,9 +222,9 @@ async function main() {
         const prResponse = await octokit.request(`GET /repos/{owner}/{repo}/pulls/{pull_number}`, {
             ...sharedContextDetails,
         });
-        const assignees = (0, determineAssigneesForPrAndThrowIfNoOwner_1.determineAssigneesForPrAndThrowIfNoOwner)(prResponse.data, event);
+        const assignees = (0, determineAssigneesForPrAndThrowIfNoCreator_1.determineAssigneesForPrAndThrowIfNoCreator)(prResponse.data, event);
         await octokit.request(`POST /repos/{owner}/{repo}/pulls/{pull_number}/assignees`, {
-            ...sharedContextDetails,
+            // ...sharedContextDetails,
             assignees,
         });
     }

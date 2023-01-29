@@ -46,6 +46,20 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
         });
     });
 
+    describe(`When given an event of "review-request-removed"`, () => {
+        test(`Return a toAssign array that only contains the given reviewers, if there are remaining review requests`, () => {
+            const pr = makePullRequest(userThree, [userOne, userTwo]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'review-requested');
+            expect(result.toAssign).toStrictEqual([userOne.login, userTwo.login]);
+        });
+
+        test(`If no other review requests are outstanding, the PR creator should be assigned to the PR`, () => {
+            const pr = makePullRequest(userOne, null, [userTwo]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'review-request-removed');
+            expect(result.toAssign).toStrictEqual([userOne.login]);
+        });
+    });
+
     describe(`When given an event of "review-submitted"`, () => {
         test(`Return a toAssign array that contains the reviewers and the owner`, () => {
             const pr = makePullRequest(userThree, [userTwo]);

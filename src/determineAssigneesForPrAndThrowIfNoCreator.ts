@@ -9,21 +9,25 @@ export function determineAssigneesForPrAndThrowIfNoCreator(
     if (!pr.user) throw new NoPullRequestCreatorFoundError(pr.number);
 
     const currentlyAssignedUsers = pr.assignees?.map(pluckLogin) ?? [];
-    const usersThatShouldBeAssigned = pr.requested_reviewers?.map(pluckLogin) ?? [];
-
-    if (event === 'review-submitted') {
-        usersThatShouldBeAssigned.push(pr.user.login);
-    }
+    const usersWithPendingReviewRequests = pr.requested_reviewers?.map(pluckLogin) ?? [];
 
     /** Return true if a given user login should be unassigned */
     const shouldNotBeAssigned = (login: string): boolean =>
-        !usersThatShouldBeAssigned.includes(login);
+        !usersWithPendingReviewRequests.includes(login);
 
     /** Return true if a given user login should be assigned (and is not currently) */
     const shouldBeAssigned = (login: string): boolean => !currentlyAssignedUsers.includes(login);
 
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
-    const toAssign = usersThatShouldBeAssigned.filter(shouldBeAssigned);
+    const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
+
+    const isReviewSubmittedEvent = event === 'review-submitted';
+    const lastReviewRequestWasRemoved =
+        event === 'review-request-removed' && !usersWithPendingReviewRequests.length;
+
+    if (isReviewSubmittedEvent || lastReviewRequestWasRemoved) {
+        toAssign.push(pr.user.login);
+    }
 
     return { toAssign, toUnassign };
 }

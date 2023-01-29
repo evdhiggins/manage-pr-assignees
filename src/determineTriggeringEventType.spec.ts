@@ -8,6 +8,13 @@ describe(determineTriggeringEventType.name, () => {
         expect(result).toBe('review-requested');
     });
 
+    test(`Return "review-request-removed" for an action/event associated with a the removal of a review request`, () => {
+        const eventName = `pull_request`;
+        const action = `review_request_removed`;
+        const result = determineTriggeringEventType({ eventName, payload: { action } });
+        expect(result).toBe('review-request-removed');
+    });
+
     test(`Return "review-submitted" for an action/event associated with a submitted review`, () => {
         const eventName = `pull_request_review`;
         const action = `submitted`;
@@ -18,7 +25,7 @@ describe(determineTriggeringEventType.name, () => {
     test(`Return "other" for all other action/event combinations`, () => {
         const combinations = [
             ['pull_request', 'assigned'],
-            ['pull_request', 'review_request_removed'],
+            ['pull_request', 'ready_for_review'],
             ['pull_request', ''],
             ['pull_request_review', 'edited'],
             ['pull_request_review', 'dismissed'],

@@ -13,16 +13,18 @@ function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
     if (!pr.user)
         throw new errors_1.NoPullRequestCreatorFoundError(pr.number);
     const currentlyAssignedUsers = pr.assignees?.map(pluckLogin) ?? [];
-    const usersThatShouldBeAssigned = pr.requested_reviewers?.map(pluckLogin) ?? [];
-    if (event === 'review-submitted') {
-        usersThatShouldBeAssigned.push(pr.user.login);
-    }
+    const usersWithPendingReviewRequests = pr.requested_reviewers?.map(pluckLogin) ?? [];
     /** Return true if a given user login should be unassigned */
-    const shouldNotBeAssigned = (login) => !usersThatShouldBeAssigned.includes(login);
+    const shouldNotBeAssigned = (login) => !usersWithPendingReviewRequests.includes(login);
     /** Return true if a given user login should be assigned (and is not currently) */
     const shouldBeAssigned = (login) => !currentlyAssignedUsers.includes(login);
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
-    const toAssign = usersThatShouldBeAssigned.filter(shouldBeAssigned);
+    const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
+    const isReviewSubmittedEvent = event === 'review-submitted';
+    const lastReviewRequestWasRemoved = event === 'review-request-removed' && !usersWithPendingReviewRequests.length;
+    if (isReviewSubmittedEvent || lastReviewRequestWasRemoved) {
+        toAssign.push(pr.user.login);
+    }
     return { toAssign, toUnassign };
 }
 exports.determineAssigneesForPrAndThrowIfNoCreator = determineAssigneesForPrAndThrowIfNoCreator;
@@ -43,6 +45,8 @@ exports.determineTriggeringEventType = void 0;
 function determineTriggeringEventType(context) {
     if (isReviewRequested(context))
         return 'review-requested';
+    if (isReviewRequestRemoval(context))
+        return 'review-request-removed';
     if (isReviewSubmitted(context))
         return 'review-submitted';
     return 'other';
@@ -50,6 +54,9 @@ function determineTriggeringEventType(context) {
 exports.determineTriggeringEventType = determineTriggeringEventType;
 function isReviewRequested({ eventName, payload }) {
     return eventName === 'pull_request' && payload?.action === 'review_requested';
+}
+function isReviewRequestRemoval({ eventName, payload }) {
+    return eventName === 'pull_request' && payload?.action === 'review_request_removed';
 }
 function isReviewSubmitted({ eventName, payload }) {
     return eventName === 'pull_request_review' && payload?.action === 'submitted';

@@ -37,11 +37,11 @@ function determineTriggeringEventType(context) {
     return 'other';
 }
 exports.determineTriggeringEventType = determineTriggeringEventType;
-function isReviewRequested({ eventName, action }) {
-    return eventName === 'pull_request' && action === 'review_requested';
+function isReviewRequested({ eventName, payload }) {
+    return eventName === 'pull_request' && payload?.action === 'review_requested';
 }
-function isReviewSubmitted({ eventName, action }) {
-    return eventName === 'pull_request_review' && action === 'submitted';
+function isReviewSubmitted({ eventName, payload }) {
+    return eventName === 'pull_request_review' && payload?.action === 'submitted';
 }
 
 
@@ -214,7 +214,7 @@ const getTokenFromCoreOrThrow_1 = __nccwpck_require__(1773);
 async function main() {
     try {
         const event = (0, determineTriggeringEventType_1.determineTriggeringEventType)(github.context);
-        console.info(`Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.action})`);
+        console.info(`Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.payload.action})`);
         if (event === 'other')
             return;
         const token = (0, getTokenFromCoreOrThrow_1.getTokenFromCoreOrThrow)(core);

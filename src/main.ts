@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import type {} from '@actions/github/lib/interfaces';
 import { determineAssigneesForPrAndThrowIfNoCreator } from './determineAssigneesForPrAndThrowIfNoCreator';
 import { determineTriggeringEventType } from './determineTriggeringEventType';
 import { extractSharedContextDetails } from './extractSharedContextDetails';
@@ -9,7 +10,7 @@ export async function main(): Promise<void> {
     try {
         const event = determineTriggeringEventType(github.context);
         console.info(
-            `Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.action})`,
+            `Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.payload.action})`,
         );
         if (event === 'other') return;
 

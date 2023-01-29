@@ -4,14 +4,14 @@ describe(determineTriggeringEventType.name, () => {
     test(`Return "review-requested" for an action/event associated with a requested review`, () => {
         const eventName = `pull_request`;
         const action = `review_requested`;
-        const result = determineTriggeringEventType({ eventName, action });
+        const result = determineTriggeringEventType({ eventName, payload: { action } });
         expect(result).toBe('review-requested');
     });
 
     test(`Return "review-submitted" for an action/event associated with a submitted review`, () => {
         const eventName = `pull_request_review`;
         const action = `submitted`;
-        const result = determineTriggeringEventType({ eventName, action });
+        const result = determineTriggeringEventType({ eventName, payload: { action } });
         expect(result).toBe('review-submitted');
     });
 
@@ -26,7 +26,7 @@ describe(determineTriggeringEventType.name, () => {
         ] as const;
 
         for (const [eventName, action] of combinations) {
-            const result = determineTriggeringEventType({ eventName, action });
+            const result = determineTriggeringEventType({ eventName, payload: { action } });
             expect(result).toBe(`other`);
         }
     });

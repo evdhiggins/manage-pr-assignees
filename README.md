@@ -4,15 +4,18 @@
 
 # Manage PR Assignee(s)
 
-A simple GitHub action that will change the assignees of a PR in three situations:
+A simple GitHub action that will change the assignees of a PR in four situations:
 
-1. A review is requested from a user
+1. A new PR is opened or a previously closed PR is reopened
+    - If there are any review requests, the users associated with the review requests will be assigned. All other users will be unassigned.
+    - If there are not any review requests, the PR creator will be assigned. All other users will be unassigned.
+2. A review is requested from a user
     - All users for which there are outstanding review requests will be assigned to the PR.
     - Users who do not have a pending review request (including the PR creator) will be unassigned.
-2. A review is submitted by a user
+3. A review is submitted by a user
     - All other users for which there are outstanding review requests will be assigned to the PR; the PR creator will be assigned to the PR.
     - Users who are not the PR creator and do not have a pending review request will be unassigned.
-3. A pending review request is removed
+4. A pending review request is removed
     - If there are other outstanding review requests, the users associated with the outstanding reviews will be assigned. All other users will be unassigned.
     - If there are not any outstanding review requests, the PR creator will be assigned. All other users will be unassigned.
 
@@ -22,7 +25,7 @@ A simple GitHub action that will change the assignees of a PR in three situation
 name: Manage assignees based on review request / submission
 on:
     pull_request:
-        types: [review_requested, review_request_removed]
+        types: [opened, reopened, review_requested, review_request_removed]
     pull_request_review:
         types: [submitted]
 
@@ -34,4 +37,17 @@ jobs:
               with:
                   # A github access token with adequate permissions to fetch a PR by number and to change its assignees.
                   token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+If you'd like for this action to only change the assignees for a subset of the supported situations, the triggering events / types can be adjusted to only include the desired situations.
+
+e.g. only change assignees when a review is requested or submitted:
+
+```yml
+name: Manage assignees based on review request / submission
+on:
+    pull_request:
+        types: [review_requested]
+    pull_request_review:
+        types: [submitted]
 ```

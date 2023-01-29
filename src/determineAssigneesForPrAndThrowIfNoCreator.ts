@@ -21,11 +21,20 @@ export function determineAssigneesForPrAndThrowIfNoCreator(
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
     const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
 
+    const isNewPrEvent = event === 'pr-opened';
     const isReviewSubmittedEvent = event === 'review-submitted';
-    const lastReviewRequestWasRemoved =
-        event === 'review-request-removed' && !usersWithPendingReviewRequests.length;
+    const isReviewRemovalEvent = event === 'review-request-removed';
 
-    if (isReviewSubmittedEvent || lastReviewRequestWasRemoved) {
+    const lastReviewRequestWasRemoved =
+        isReviewRemovalEvent && !usersWithPendingReviewRequests.length;
+    const isNewPrWithNoPendingReviewRequests =
+        isNewPrEvent && !usersWithPendingReviewRequests.length;
+
+    if (
+        isNewPrWithNoPendingReviewRequests ||
+        isReviewSubmittedEvent ||
+        lastReviewRequestWasRemoved
+    ) {
         toAssign.push(pr.user.login);
     }
 

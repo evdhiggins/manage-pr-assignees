@@ -26,6 +26,20 @@ function makePullRequest(
 //#endregion
 
 describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
+    describe(`When given an event of "pr-opened"`, () => {
+        test(`Return a toAssign array that only contains the given reviewers, if there are any outstanding review requests`, () => {
+            const pr = makePullRequest(userThree, [userOne, userTwo]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'pr-opened');
+            expect(result.toAssign).toStrictEqual([userOne.login, userTwo.login]);
+        });
+
+        test(`If no review requests are outstanding, the PR creator should be assigned to the PR`, () => {
+            const pr = makePullRequest(userOne, null, [userTwo]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'pr-opened');
+            expect(result.toAssign).toStrictEqual([userOne.login]);
+        });
+    });
+
     describe(`When given an event of "review-requested"`, () => {
         test(`Return a toAssign array that only contains the given reviewers`, () => {
             const pr = makePullRequest(userThree, [userOne, userTwo]);
@@ -49,7 +63,7 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
     describe(`When given an event of "review-request-removed"`, () => {
         test(`Return a toAssign array that only contains the given reviewers, if there are remaining review requests`, () => {
             const pr = makePullRequest(userThree, [userOne, userTwo]);
-            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'review-requested');
+            const result = determineAssigneesForPrAndThrowIfNoCreator(pr, 'review-request-removed');
             expect(result.toAssign).toStrictEqual([userOne.login, userTwo.login]);
         });
 

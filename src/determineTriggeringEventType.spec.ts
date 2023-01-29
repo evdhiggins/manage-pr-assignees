@@ -1,6 +1,13 @@
 import { determineTriggeringEventType } from './determineTriggeringEventType';
 
 describe(determineTriggeringEventType.name, () => {
+    test(`Return "pr-opened" for an action/event associated with a new pr`, () => {
+        const eventName = `pull_request`;
+        const action = `opened`;
+        const result = determineTriggeringEventType({ eventName, payload: { action } });
+        expect(result).toBe('pr-opened');
+    });
+
     test(`Return "review-requested" for an action/event associated with a requested review`, () => {
         const eventName = `pull_request`;
         const action = `review_requested`;

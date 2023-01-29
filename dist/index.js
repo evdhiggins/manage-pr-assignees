@@ -20,9 +20,14 @@ function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
     const shouldBeAssigned = (login) => !currentlyAssignedUsers.includes(login);
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
     const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
+    const isNewPrEvent = event === 'pr-opened';
     const isReviewSubmittedEvent = event === 'review-submitted';
-    const lastReviewRequestWasRemoved = event === 'review-request-removed' && !usersWithPendingReviewRequests.length;
-    if (isReviewSubmittedEvent || lastReviewRequestWasRemoved) {
+    const isReviewRemovalEvent = event === 'review-request-removed';
+    const lastReviewRequestWasRemoved = isReviewRemovalEvent && !usersWithPendingReviewRequests.length;
+    const isNewPrWithNoPendingReviewRequests = isNewPrEvent && !usersWithPendingReviewRequests.length;
+    if (isNewPrWithNoPendingReviewRequests ||
+        isReviewSubmittedEvent ||
+        lastReviewRequestWasRemoved) {
         toAssign.push(pr.user.login);
     }
     return { toAssign, toUnassign };
@@ -43,6 +48,8 @@ function pluckLogin(user) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.determineTriggeringEventType = void 0;
 function determineTriggeringEventType(context) {
+    if (isPrOpened(context))
+        return 'pr-opened';
     if (isReviewRequested(context))
         return 'review-requested';
     if (isReviewRequestRemoval(context))
@@ -52,6 +59,9 @@ function determineTriggeringEventType(context) {
     return 'other';
 }
 exports.determineTriggeringEventType = determineTriggeringEventType;
+function isPrOpened({ eventName, payload }) {
+    return eventName === 'pull_request' && payload?.action === 'opened';
+}
 function isReviewRequested({ eventName, payload }) {
     return eventName === 'pull_request' && payload?.action === 'review_requested';
 }

@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/evdhiggins/manage-pr-assignee/actions"><img alt="typescript-action status" src="https://github.com/evdhiggins/manage-pr-assignee/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/evdhiggins/manage-pr-assignees/actions"><img alt="typescript-action status" src="https://github.com/evdhiggins/manage-pr-assignees/workflows/build-test/badge.svg"></a>
 </p>
 
 # Manage PR Assignee(s)
@@ -14,8 +14,8 @@ A simple GitHub action that will change the assignees of a PR in two situations:
 ## Usage Example
 
 ```yml
-- uses: evdhiggins/manage-pr-assignee@v1
+- uses: evdhiggins/manage-pr-assignees@v1
   with:
-      #github access token.
+      # A github access token with adequate permissions to fetch a PR by number and to change its assignees.
       token: ${{ secrets.GITHUB_TOKEN }}
 ```

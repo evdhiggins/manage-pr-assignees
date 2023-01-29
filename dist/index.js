@@ -12,12 +12,23 @@ const errors_1 = __nccwpck_require__(9062);
 function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
     if (!pr.user)
         throw new errors_1.NoPullRequestCreatorFoundError(pr.number);
-    const assignees = pr.requested_reviewers?.map(r => r.login) ?? [];
-    if (event === 'review-submitted')
-        assignees.push(pr.user.login);
-    return assignees;
+    const currentlyAssignedUsers = pr.assignees?.map(pluckLogin) ?? [];
+    const usersThatShouldBeAssigned = pr.requested_reviewers?.map(pluckLogin) ?? [];
+    if (event === 'review-submitted') {
+        usersThatShouldBeAssigned.push(pr.user.login);
+    }
+    /** Return true if a given user login should be unassigned */
+    const shouldNotBeAssigned = (login) => !usersThatShouldBeAssigned.includes(login);
+    /** Return true if a given user login should be assigned (and is not currently) */
+    const shouldBeAssigned = (login) => !currentlyAssignedUsers.includes(login);
+    const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
+    const toAssign = usersThatShouldBeAssigned.filter(shouldBeAssigned);
+    return { toAssign, toUnassign };
 }
 exports.determineAssigneesForPrAndThrowIfNoCreator = determineAssigneesForPrAndThrowIfNoCreator;
+function pluckLogin(user) {
+    return user.login;
+}
 
 
 /***/ }),
@@ -224,12 +235,22 @@ async function main() {
             ...sharedContextDetails,
         });
         const assignees = (0, determineAssigneesForPrAndThrowIfNoCreator_1.determineAssigneesForPrAndThrowIfNoCreator)(prResponse.data, event);
-        console.info(`Updating PR ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${sharedContextDetails.pull_number} to have the following assignees: ${assignees.join(`, `)}`);
-        await octokit.request(`POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`, {
-            ...sharedContextDetails,
-            issue_number: sharedContextDetails.pull_number,
-            assignees,
-        });
+        if (assignees.toAssign.length) {
+            console.info(`Updating ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${sharedContextDetails.pull_number} to add the following assignees: ${assignees.toAssign.join(`, `)}`);
+            await octokit.rest.issues.addAssignees({
+                ...sharedContextDetails,
+                issue_number: sharedContextDetails.pull_number,
+                assignees: assignees.toAssign,
+            });
+        }
+        if (assignees.toUnassign.length) {
+            console.info(`Updating ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${sharedContextDetails.pull_number} to remove the following assignees: ${assignees.toUnassign.join(`, `)}`);
+            await octokit.rest.issues.removeAssignees({
+                ...sharedContextDetails,
+                issue_number: sharedContextDetails.pull_number,
+                assignees: assignees.toUnassign,
+            });
+        }
     }
     catch (error) {
         console.error(error);

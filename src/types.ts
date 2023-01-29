@@ -22,6 +22,7 @@ export type User = Pick<GithubUser, 'login'>;
 export type PullRequest = Pick<GithubPullRequest, 'number'> & {
     user: User | null;
     requested_reviewers?: User[] | null;
+    assignees?: User[] | null;
 };
 
 //

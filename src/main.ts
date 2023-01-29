@@ -22,16 +22,32 @@ export async function main(): Promise<void> {
             ...sharedContextDetails,
         });
         const assignees = determineAssigneesForPrAndThrowIfNoCreator(prResponse.data, event);
-        console.info(
-            `Updating PR ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${
-                sharedContextDetails.pull_number
-            } to have the following assignees: ${assignees.join(`, `)}`,
-        );
-        await octokit.request(`POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`, {
-            ...sharedContextDetails,
-            issue_number: sharedContextDetails.pull_number,
-            assignees,
-        });
+
+        if (assignees.toAssign.length) {
+            console.info(
+                `Updating ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${
+                    sharedContextDetails.pull_number
+                } to add the following assignees: ${assignees.toAssign.join(`, `)}`,
+            );
+            await octokit.rest.issues.addAssignees({
+                ...sharedContextDetails,
+                issue_number: sharedContextDetails.pull_number,
+                assignees: assignees.toAssign,
+            });
+        }
+
+        if (assignees.toUnassign.length) {
+            console.info(
+                `Updating ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${
+                    sharedContextDetails.pull_number
+                } to remove the following assignees: ${assignees.toUnassign.join(`, `)}`,
+            );
+            await octokit.rest.issues.removeAssignees({
+                ...sharedContextDetails,
+                issue_number: sharedContextDetails.pull_number,
+                assignees: assignees.toUnassign,
+            });
+        }
     } catch (error) {
         console.error(error);
         if (error instanceof Error) core.setFailed(error.message);

@@ -214,6 +214,7 @@ const getTokenFromCoreOrThrow_1 = __nccwpck_require__(1773);
 async function main() {
     try {
         const event = (0, determineTriggeringEventType_1.determineTriggeringEventType)(github.context);
+        console.info(`Determined triggering event type to be "${event}" (${github.context.eventName} / ${github.context.action})`);
         if (event === 'other')
             return;
         const token = (0, getTokenFromCoreOrThrow_1.getTokenFromCoreOrThrow)(core);
@@ -223,12 +224,15 @@ async function main() {
             ...sharedContextDetails,
         });
         const assignees = (0, determineAssigneesForPrAndThrowIfNoCreator_1.determineAssigneesForPrAndThrowIfNoCreator)(prResponse.data, event);
-        await octokit.request(`POST /repos/{owner}/{repo}/pulls/{pull_number}/assignees`, {
-            // ...sharedContextDetails,
+        console.info(`Updating PR ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${sharedContextDetails.pull_number} to have the following assignees: ${assignees.join(`, `)}`);
+        await octokit.request(`POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`, {
+            ...sharedContextDetails,
+            issue_number: sharedContextDetails.pull_number,
             assignees,
         });
     }
     catch (error) {
+        console.error(error);
         if (error instanceof Error)
             core.setFailed(error.message);
     }

@@ -1,5 +1,8 @@
-name: 'Manage PR Assignee'
+name: 'Manage PR Assignees'
 description: 'A github action that manages the assignee(s) of a PR in reaction to review requests & submissions'
+branding:
+    icon: 'check-circle'
+    color: 'purple'
 author: 'Evan Higgins'
 inputs:
     token:

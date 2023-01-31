@@ -4,6 +4,7 @@ import type {} from '@actions/github/lib/interfaces';
 import { determineAssigneesForPrAndThrowIfNoCreator } from './determineAssigneesForPrAndThrowIfNoCreator';
 import { determineTriggeringEventType } from './determineTriggeringEventType';
 import { extractSharedContextDetails } from './extractSharedContextDetails';
+import { getCreatorAssigneeSubstitutionsAndThrowIfInvalid } from './getCreatorAssigneeSubstitutionsAndThrowIfInvalid';
 import { getTokenFromCoreOrThrow } from './getTokenFromCoreOrThrow';
 
 export async function main(): Promise<void> {
@@ -15,13 +16,18 @@ export async function main(): Promise<void> {
         if (event === 'other') return;
 
         const token = getTokenFromCoreOrThrow(core);
+        const creatorAssigneeSubstitutions = getCreatorAssigneeSubstitutionsAndThrowIfInvalid(core);
         const sharedContextDetails = extractSharedContextDetails(github.context);
 
         const octokit = github.getOctokit(token);
         const prResponse = await octokit.request(`GET /repos/{owner}/{repo}/pulls/{pull_number}`, {
             ...sharedContextDetails,
         });
-        const assignees = determineAssigneesForPrAndThrowIfNoCreator(prResponse.data, event);
+        const assignees = determineAssigneesForPrAndThrowIfNoCreator({
+            pr: prResponse.data,
+            event,
+            creatorAssigneeSubstitutions,
+        });
 
         if (assignees.toAssign.length) {
             console.info(

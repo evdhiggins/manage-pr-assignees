@@ -54,7 +54,7 @@ function pluckLogin(user) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.determineTriggeringEventType = void 0;
 function determineTriggeringEventType(context) {
-    if (isPrOpened(context))
+    if (isPrOpened(context) || isPrReopened(context))
         return 'pr-opened';
     if (isReviewRequested(context))
         return 'review-requested';
@@ -67,6 +67,9 @@ function determineTriggeringEventType(context) {
 exports.determineTriggeringEventType = determineTriggeringEventType;
 function isPrOpened({ eventName, payload }) {
     return eventName === 'pull_request' && payload?.action === 'opened';
+}
+function isPrReopened({ eventName, payload }) {
+    return eventName === 'pull_request' && payload?.action === 'reopened';
 }
 function isReviewRequested({ eventName, payload }) {
     return eventName === 'pull_request' && payload?.action === 'review_requested';

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type * as ActionsCore from '@actions/core';
 import * as github from '@actions/github';
 
 /** Extract the type into which a promise will resolve */
@@ -8,6 +9,8 @@ export type UnboxPromise<T extends Promise<any>> = T extends Promise<infer U> ? 
 export type UnboxPromiseReturnType<T extends (...args: any[]) => Promise<any>> = UnboxPromise<
     ReturnType<T>
 >;
+
+export type CoreGetInput = Pick<typeof ActionsCore, 'getInput'>;
 
 /** The full github user type */
 export type GithubUser = UnboxPromiseReturnType<typeof fetchUser>['data'];

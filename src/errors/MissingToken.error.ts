@@ -1,5 +1,7 @@
+import { InputKeys } from '../inputs';
+
 export class MissingTokenError extends Error {
     constructor() {
-        super(`"token" input was not provided`);
+        super(`"${InputKeys.Token}" input was not provided`);
     }
 }

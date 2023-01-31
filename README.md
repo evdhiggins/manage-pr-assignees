@@ -19,6 +19,20 @@ A simple GitHub action that will change the assignees of a PR in four situations
     - If there are other outstanding review requests, the users associated with the outstanding reviews will be assigned. All other users will be unassigned.
     - If there are not any outstanding review requests, the PR creator will be assigned. All other users will be unassigned.
 
+## Inputs
+
+### `token`
+
+Required. This input should contain a Github token with enough permissions to fetch a PR by number, and to change the assignees of a PR / issue.
+
+### `pr-creator-assignee-substitutions`
+
+Optional. This input may contain a JSON-stringified record with key/value pairs of usernames. All PRs created by a `key` username will be assigned to the `value` username in cases where the PR creator would otherwise be assigned.
+
+For example, a `pr-creator-assignee-substitutions` value of `"{ "dependabot": "dev123" }"` will assign `dev123` to all PRs where `dependabot` would otherwise have been assigned.
+
+This assignee mapping does not affect the assignment of requested reviewers.
+
 ## Usage Example
 
 ```yml
@@ -37,6 +51,8 @@ jobs:
               with:
                   # A github access token with adequate permissions to fetch a PR by number and to change its assignees.
                   token: ${{ secrets.GITHUB_TOKEN }}
+                  # Assign all PRs created by dependabot to evdhiggins
+                  pr-creator-assignee-substitutions: '{ "dependabot": "evdhiggins" }'
 ```
 
 If you'd like for this action to only change the assignees for a subset of the supported situations, the triggering events / types can be adjusted to only include the desired situations.

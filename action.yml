@@ -8,6 +8,11 @@ inputs:
     token:
         description: A github access token that has adequate permissions to fetch a PR and change the assignee(s).
         required: true
+        type: string
+    pr-creator-assignee-substitutions:
+        description: A JSON stringified object where each key/value pair are github usernames. All PRs created by the "key username" will be assigned to the "value username" in situations that would otherwise assign the PR creator
+        required: false
+        type: string
 runs:
     using: 'node16'
     main: 'dist/index.js'

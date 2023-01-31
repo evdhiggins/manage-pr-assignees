@@ -8,6 +8,13 @@ describe(determineTriggeringEventType.name, () => {
         expect(result).toBe('pr-opened');
     });
 
+    test(`Return "pr-opened" for an action/event associated with pr that was reopened`, () => {
+        const eventName = `pull_request`;
+        const action = `reopened`;
+        const result = determineTriggeringEventType({ eventName, payload: { action } });
+        expect(result).toBe('pr-opened');
+    });
+
     test(`Return "review-requested" for an action/event associated with a requested review`, () => {
         const eventName = `pull_request`;
         const action = `review_requested`;

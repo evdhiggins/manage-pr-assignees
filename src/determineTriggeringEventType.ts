@@ -10,7 +10,7 @@ export type TriggeringEventType =
 type ContextInput = Pick<Context, 'eventName'> & { payload?: { action?: string } };
 
 export function determineTriggeringEventType(context: ContextInput): TriggeringEventType {
-    if (isPrOpened(context)) return 'pr-opened';
+    if (isPrOpened(context) || isPrReopened(context)) return 'pr-opened';
     if (isReviewRequested(context)) return 'review-requested';
     if (isReviewRequestRemoval(context)) return 'review-request-removed';
     if (isReviewSubmitted(context)) return 'review-submitted';
@@ -19,6 +19,10 @@ export function determineTriggeringEventType(context: ContextInput): TriggeringE
 
 function isPrOpened({ eventName, payload }: ContextInput): boolean {
     return eventName === 'pull_request' && payload?.action === 'opened';
+}
+
+function isPrReopened({ eventName, payload }: ContextInput): boolean {
+    return eventName === 'pull_request' && payload?.action === 'reopened';
 }
 
 function isReviewRequested({ eventName, payload }: ContextInput): boolean {

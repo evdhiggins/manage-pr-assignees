@@ -9,7 +9,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.determineAssigneesForPrAndThrowIfNoCreator = void 0;
 const errors_1 = __nccwpck_require__(9062);
-function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
+function determineAssigneesForPrAndThrowIfNoCreator({ pr, event, creatorAssigneeSubstitutions, }) {
     if (!pr.user)
         throw new errors_1.NoPullRequestCreatorFoundError(pr.number);
     const currentlyAssignedUsers = pr.assignees?.map(pluckLogin) ?? [];
@@ -28,7 +28,13 @@ function determineAssigneesForPrAndThrowIfNoCreator(pr, event) {
     if (isNewPrWithNoPendingReviewRequests ||
         isReviewSubmittedEvent ||
         lastReviewRequestWasRemoved) {
-        toAssign.push(pr.user.login);
+        if (pr.user.login in creatorAssigneeSubstitutions) {
+            const creatorSubstituteAssignee = creatorAssigneeSubstitutions[pr.user.login];
+            toAssign.push(creatorSubstituteAssignee);
+        }
+        else {
+            toAssign.push(pr.user.login);
+        }
     }
     return { toAssign, toUnassign };
 }
@@ -75,6 +81,41 @@ function isReviewSubmitted({ eventName, payload }) {
 
 /***/ }),
 
+/***/ 1101:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InvalidAssigneeSubstitutionsError = void 0;
+const inputs_1 = __nccwpck_require__(6180);
+class InvalidAssigneeSubstitutionsError extends Error {
+    constructor() {
+        super(`"${inputs_1.InputKeys.AssigneeMap}" input was not valid. Input must be a JSON string of type Record<string, string>`);
+    }
+}
+exports.InvalidAssigneeSubstitutionsError = InvalidAssigneeSubstitutionsError;
+
+
+/***/ }),
+
+/***/ 5906:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InvalidInputJsonError = void 0;
+class InvalidInputJsonError extends Error {
+    constructor(inputName) {
+        super(`Unable to parse JSON input for "${inputName}"`);
+    }
+}
+exports.InvalidInputJsonError = InvalidInputJsonError;
+
+
+/***/ }),
+
 /***/ 5621:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -93,15 +134,16 @@ exports.MissingSharedContextDetailsError = MissingSharedContextDetailsError;
 /***/ }),
 
 /***/ 1925:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MissingTokenError = void 0;
+const inputs_1 = __nccwpck_require__(6180);
 class MissingTokenError extends Error {
     constructor() {
-        super(`"token" input was not provided`);
+        super(`"${inputs_1.InputKeys.Token}" input was not provided`);
     }
 }
 exports.MissingTokenError = MissingTokenError;
@@ -146,6 +188,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+__exportStar(__nccwpck_require__(1101), exports);
+__exportStar(__nccwpck_require__(5906), exports);
 __exportStar(__nccwpck_require__(5621), exports);
 __exportStar(__nccwpck_require__(1925), exports);
 __exportStar(__nccwpck_require__(712), exports);
@@ -183,6 +227,41 @@ exports.extractSharedContextDetails = extractSharedContextDetails;
 
 /***/ }),
 
+/***/ 4914:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCreatorAssigneeSubstitutionsAndThrowIfInvalid = void 0;
+const errors_1 = __nccwpck_require__(9062);
+const inputs_1 = __nccwpck_require__(6180);
+const util_1 = __nccwpck_require__(4024);
+/** Extract the "token" required input from @actions/core. Throw an error if no token value is found */
+function getCreatorAssigneeSubstitutionsAndThrowIfInvalid(core) {
+    const substitutionsString = core.getInput(inputs_1.InputKeys.AssigneeMap);
+    if (!substitutionsString)
+        return {};
+    const substitutions = (0, util_1.parseJsonFromInputOrThrowError)(substitutionsString, 'AssigneeMap');
+    return validateSubstitutionsOrThrow(substitutions);
+}
+exports.getCreatorAssigneeSubstitutionsAndThrowIfInvalid = getCreatorAssigneeSubstitutionsAndThrowIfInvalid;
+function validateSubstitutionsOrThrow(substitutions) {
+    if (typeof substitutions !== 'object')
+        throw new errors_1.InvalidAssigneeSubstitutionsError();
+    if (Array.isArray(substitutions))
+        throw new errors_1.InvalidAssigneeSubstitutionsError();
+    if (substitutions === null)
+        throw new errors_1.InvalidAssigneeSubstitutionsError();
+    for (const [key, value] of Object.entries(substitutions))
+        if (typeof key !== 'string' || typeof value !== 'string')
+            throw new errors_1.InvalidAssigneeSubstitutionsError();
+    return substitutions;
+}
+
+
+/***/ }),
+
 /***/ 1773:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -191,14 +270,30 @@ exports.extractSharedContextDetails = extractSharedContextDetails;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getTokenFromCoreOrThrow = void 0;
 const errors_1 = __nccwpck_require__(9062);
+const inputs_1 = __nccwpck_require__(6180);
 /** Extract the "token" required input from @actions/core. Throw an error if no token value is found */
 function getTokenFromCoreOrThrow(core) {
-    const token = core.getInput(`token`);
+    const token = core.getInput(inputs_1.InputKeys.Token);
     if (!token)
         throw new errors_1.MissingTokenError();
     return token;
 }
 exports.getTokenFromCoreOrThrow = getTokenFromCoreOrThrow;
+
+
+/***/ }),
+
+/***/ 6180:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InputKeys = void 0;
+exports.InputKeys = {
+    AssigneeMap: 'pr-creator-assignee-substitutions',
+    Token: 'token',
+};
 
 
 /***/ }),
@@ -238,6 +333,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const determineAssigneesForPrAndThrowIfNoCreator_1 = __nccwpck_require__(5198);
 const determineTriggeringEventType_1 = __nccwpck_require__(3077);
 const extractSharedContextDetails_1 = __nccwpck_require__(5558);
+const getCreatorAssigneeSubstitutionsAndThrowIfInvalid_1 = __nccwpck_require__(4914);
 const getTokenFromCoreOrThrow_1 = __nccwpck_require__(1773);
 async function main() {
     try {
@@ -246,12 +342,17 @@ async function main() {
         if (event === 'other')
             return;
         const token = (0, getTokenFromCoreOrThrow_1.getTokenFromCoreOrThrow)(core);
+        const creatorAssigneeSubstitutions = (0, getCreatorAssigneeSubstitutionsAndThrowIfInvalid_1.getCreatorAssigneeSubstitutionsAndThrowIfInvalid)(core);
         const sharedContextDetails = (0, extractSharedContextDetails_1.extractSharedContextDetails)(github.context);
         const octokit = github.getOctokit(token);
         const prResponse = await octokit.request(`GET /repos/{owner}/{repo}/pulls/{pull_number}`, {
             ...sharedContextDetails,
         });
-        const assignees = (0, determineAssigneesForPrAndThrowIfNoCreator_1.determineAssigneesForPrAndThrowIfNoCreator)(prResponse.data, event);
+        const assignees = (0, determineAssigneesForPrAndThrowIfNoCreator_1.determineAssigneesForPrAndThrowIfNoCreator)({
+            pr: prResponse.data,
+            event,
+            creatorAssigneeSubstitutions,
+        });
         if (assignees.toAssign.length) {
             console.info(`Updating ${sharedContextDetails.owner}/${sharedContextDetails.repo} PR #${sharedContextDetails.pull_number} to add the following assignees: ${assignees.toAssign.join(`, `)}`);
             await octokit.rest.issues.addAssignees({
@@ -282,12 +383,14 @@ void main();
 /***/ }),
 
 /***/ 4024:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isNotSet = exports.isSet = void 0;
+exports.parseJsonFromInputOrThrowError = exports.isNotSet = exports.isSet = void 0;
+const errors_1 = __nccwpck_require__(9062);
+const inputs_1 = __nccwpck_require__(6180);
 function isSet(input) {
     return input !== null && input !== undefined;
 }
@@ -296,6 +399,15 @@ function isNotSet(input) {
     return input === null || input === undefined;
 }
 exports.isNotSet = isNotSet;
+function parseJsonFromInputOrThrowError(json, keyofInputs) {
+    try {
+        return JSON.parse(json);
+    }
+    catch {
+        throw new errors_1.InvalidInputJsonError(inputs_1.InputKeys[keyofInputs]);
+    }
+}
+exports.parseJsonFromInputOrThrowError = parseJsonFromInputOrThrowError;
 
 
 /***/ }),

@@ -26,20 +26,10 @@ export function determineAssigneesForPrAndThrowIfNoCreator({
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
     const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
 
-    const isNewPrEvent = event === 'pr-opened';
-    const isReviewSubmittedEvent = event === 'review-submitted';
-    const isReviewRemovalEvent = event === 'review-request-removed';
+    const isReviewSubmittedNotApprovedEvent = event === 'review-submitted-not-approved';
+    const noOutstandingReviewRequestsRemain = usersWithPendingReviewRequests.length === 0;
 
-    const lastReviewRequestWasRemoved =
-        isReviewRemovalEvent && !usersWithPendingReviewRequests.length;
-    const isNewPrWithNoPendingReviewRequests =
-        isNewPrEvent && !usersWithPendingReviewRequests.length;
-
-    if (
-        isNewPrWithNoPendingReviewRequests ||
-        isReviewSubmittedEvent ||
-        lastReviewRequestWasRemoved
-    ) {
+    if (isReviewSubmittedNotApprovedEvent || noOutstandingReviewRequestsRemain) {
         if (pr.user.login in creatorAssigneeSubstitutions) {
             const creatorSubstituteAssignee = creatorAssigneeSubstitutions[pr.user.login];
             toAssign.push(creatorSubstituteAssignee);

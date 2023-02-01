@@ -29,11 +29,20 @@ describe(determineTriggeringEventType.name, () => {
         expect(result).toBe('review-request-removed');
     });
 
-    test(`Return "review-submitted" for an action/event associated with a submitted review`, () => {
+    test(`Return "review-submitted-approved" for an action/event associated with a submitted approving review`, () => {
         const eventName = `pull_request_review`;
         const action = `submitted`;
-        const result = determineTriggeringEventType({ eventName, payload: { action } });
-        expect(result).toBe('review-submitted');
+        const review = { state: 'approved' } as const;
+        const result = determineTriggeringEventType({ eventName, payload: { action, review } });
+        expect(result).toBe('review-submitted-approved');
+    });
+
+    test(`Return "review-submitted-not-approved" for an action/event associated with a non-approved submitted review`, () => {
+        const eventName = `pull_request_review`;
+        const action = `submitted`;
+        const review = { state: 'changes_requested' } as const;
+        const result = determineTriggeringEventType({ eventName, payload: { action, review } });
+        expect(result).toBe('review-submitted-not-approved');
     });
 
     test(`Return "other" for all other action/event combinations`, () => {

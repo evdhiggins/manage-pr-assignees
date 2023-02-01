@@ -13,8 +13,13 @@ A simple GitHub action that will change the assignees of a PR in four situations
     - All users for which there are outstanding review requests will be assigned to the PR.
     - Users who do not have a pending review request (including the PR creator) will be unassigned.
 3. A review is submitted by a user
-    - All other users for which there are outstanding review requests will be assigned to the PR; the PR creator will be assigned to the PR.
-    - Users who are not the PR creator and do not have a pending review request will be unassigned.
+    - If the review was an "approval"
+        - If there are other are outstanding review requests, the associated users will be assigned to the PR
+        - Otherwise, the PR creator will be assigned
+        - Users who are not the PR creator and do not have a pending review request will be unassigned.
+    - If the review was not an "approval"
+        - All other users for which there are outstanding review requests will be assigned to the PR; the PR creator will be assigned to the PR.
+        - Users who are not the PR creator and do not have a pending review request will be unassigned.
 4. A pending review request is removed
     - If there are other outstanding review requests, the users associated with the outstanding reviews will be assigned. All other users will be unassigned.
     - If there are not any outstanding review requests, the PR creator will be assigned. All other users will be unassigned.

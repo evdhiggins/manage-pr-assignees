@@ -4,16 +4,24 @@ export type TriggeringEventType =
     | 'pr-opened'
     | 'review-requested'
     | 'review-request-removed'
-    | 'review-submitted'
+    | 'review-submitted-approved'
+    | 'review-submitted-not-approved'
     | 'other';
 
-type ContextInput = Pick<Context, 'eventName'> & { payload?: { action?: string } };
+type ContextInput = Pick<Context, 'eventName'> & {
+    payload?: {
+        action?: string;
+        // State values taken from graphql api docs: https://docs.github.com/en/graphql/reference/enums#pullrequestreviewstate
+        review?: { state?: 'approved' | 'changes_requested' | 'commented' };
+    };
+};
 
 export function determineTriggeringEventType(context: ContextInput): TriggeringEventType {
     if (isPrOpened(context) || isPrReopened(context)) return 'pr-opened';
     if (isReviewRequested(context)) return 'review-requested';
     if (isReviewRequestRemoval(context)) return 'review-request-removed';
-    if (isReviewSubmitted(context)) return 'review-submitted';
+    if (isReviewSubmittedApproval(context)) return 'review-submitted-approved';
+    if (isReviewSubmitted(context)) return 'review-submitted-not-approved';
     return 'other';
 }
 
@@ -31,6 +39,10 @@ function isReviewRequested({ eventName, payload }: ContextInput): boolean {
 
 function isReviewRequestRemoval({ eventName, payload }: ContextInput): boolean {
     return eventName === 'pull_request' && payload?.action === 'review_request_removed';
+}
+
+function isReviewSubmittedApproval(ctx: ContextInput): boolean {
+    return isReviewSubmitted(ctx) && ctx.payload?.review?.state === 'approved';
 }
 
 function isReviewSubmitted({ eventName, payload }: ContextInput): boolean {

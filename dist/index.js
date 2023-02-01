@@ -20,14 +20,9 @@ function determineAssigneesForPrAndThrowIfNoCreator({ pr, event, creatorAssignee
     const shouldBeAssigned = (login) => !currentlyAssignedUsers.includes(login);
     const toUnassign = currentlyAssignedUsers.filter(shouldNotBeAssigned);
     const toAssign = usersWithPendingReviewRequests.filter(shouldBeAssigned);
-    const isNewPrEvent = event === 'pr-opened';
-    const isReviewSubmittedEvent = event === 'review-submitted';
-    const isReviewRemovalEvent = event === 'review-request-removed';
-    const lastReviewRequestWasRemoved = isReviewRemovalEvent && !usersWithPendingReviewRequests.length;
-    const isNewPrWithNoPendingReviewRequests = isNewPrEvent && !usersWithPendingReviewRequests.length;
-    if (isNewPrWithNoPendingReviewRequests ||
-        isReviewSubmittedEvent ||
-        lastReviewRequestWasRemoved) {
+    const isReviewSubmittedNotApprovedEvent = event === 'review-submitted-not-approved';
+    const noOutstandingReviewRequestsRemain = usersWithPendingReviewRequests.length === 0;
+    if (isReviewSubmittedNotApprovedEvent || noOutstandingReviewRequestsRemain) {
         if (pr.user.login in creatorAssigneeSubstitutions) {
             const creatorSubstituteAssignee = creatorAssigneeSubstitutions[pr.user.login];
             toAssign.push(creatorSubstituteAssignee);
@@ -60,8 +55,10 @@ function determineTriggeringEventType(context) {
         return 'review-requested';
     if (isReviewRequestRemoval(context))
         return 'review-request-removed';
+    if (isReviewSubmittedApproval(context))
+        return 'review-submitted-approved';
     if (isReviewSubmitted(context))
-        return 'review-submitted';
+        return 'review-submitted-not-approved';
     return 'other';
 }
 exports.determineTriggeringEventType = determineTriggeringEventType;
@@ -76,6 +73,9 @@ function isReviewRequested({ eventName, payload }) {
 }
 function isReviewRequestRemoval({ eventName, payload }) {
     return eventName === 'pull_request' && payload?.action === 'review_request_removed';
+}
+function isReviewSubmittedApproval(ctx) {
+    return isReviewSubmitted(ctx) && ctx.payload?.review?.state === 'approved';
 }
 function isReviewSubmitted({ eventName, payload }) {
     return eventName === 'pull_request_review' && payload?.action === 'submitted';

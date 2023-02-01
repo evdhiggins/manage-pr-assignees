@@ -56,10 +56,10 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
             expect(result.toUnassign).toStrictEqual([userOne.login]);
         });
 
-        test(`When given no reviewers, toAssign should be an empty array`, () => {
+        test(`When given no reviewers, toAssign should contain the pr creator`, () => {
             const arg = makeArgWithPrValues(userOne, null);
             const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
-            expect(result.toAssign).toStrictEqual([]);
+            expect(result.toAssign).toStrictEqual([userOne.login]);
         });
     });
 
@@ -92,9 +92,44 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
         });
     });
 
-    describe(`When given an event of "review-submitted"`, () => {
+    describe(`When given an event of "review-submitted-approved"`, () => {
         const makeArgWithPrValues = (...args: PrArgs): Arg =>
-            makeArg({ pr: makePullRequest(...args), event: 'review-submitted' });
+            makeArg({ pr: makePullRequest(...args), event: 'review-submitted-approved' });
+
+        test(`Return a toAssign array that contains other outstanding reviewers`, () => {
+            const arg = makeArgWithPrValues(userThree, [userTwo]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+            expect(result.toAssign).toStrictEqual([userTwo.login]);
+        });
+
+        test(`Return a toUnassign array that contains any reviewers for whom a review is no longer pending`, () => {
+            const arg = makeArgWithPrValues(userThree, [userTwo], [userOne]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+            expect(result.toUnassign).toStrictEqual([userOne.login]);
+        });
+
+        describe(`If no other review requests are outstanding`, () => {
+            test(`The toAssign array should contain the pr creator`, () => {
+                const arg = makeArgWithPrValues(userOne, null);
+                const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+                expect(result.toAssign).toStrictEqual([userOne.login]);
+            });
+
+            test(`If the PR is created by a user included in the assignee substitutions, the substituted user should be assigned`, () => {
+                const pr = makePullRequest(userOne, [], [userTwo]);
+                const result = determineAssigneesForPrAndThrowIfNoCreator({
+                    pr,
+                    event: 'review-submitted-approved',
+                    creatorAssigneeSubstitutions: { [userOne.login]: userThree.login },
+                });
+                expect(result.toAssign).toStrictEqual([userThree.login]);
+            });
+        });
+    });
+
+    describe(`When given an event of "review-submitted-not-approved"`, () => {
+        const makeArgWithPrValues = (...args: PrArgs): Arg =>
+            makeArg({ pr: makePullRequest(...args), event: 'review-submitted-not-approved' });
 
         test(`Return a toAssign array that contains the reviewers and the pr creator`, () => {
             const arg = makeArgWithPrValues(userThree, [userTwo]);
@@ -119,7 +154,7 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
                 const pr = makePullRequest(userOne, [], [userTwo]);
                 const result = determineAssigneesForPrAndThrowIfNoCreator({
                     pr,
-                    event: 'review-submitted',
+                    event: 'review-submitted-not-approved',
                     creatorAssigneeSubstitutions: { [userOne.login]: userThree.login },
                 });
                 expect(result.toAssign).toStrictEqual([userThree.login]);
@@ -129,7 +164,7 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
 
     test(`Throw an error if no PR pr creator is available`, () => {
         const pr = makePullRequest(null, [userTwo]);
-        const arg: Arg = { pr, event: 'review-submitted', creatorAssigneeSubstitutions: {} };
+        const arg: Arg = { pr, event: 'pr-opened', creatorAssigneeSubstitutions: {} };
         const fn = () => determineAssigneesForPrAndThrowIfNoCreator(arg);
         expect(fn).toThrowError(NoPullRequestCreatorFoundError);
     });

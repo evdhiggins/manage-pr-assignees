@@ -34,7 +34,7 @@ Required. This input should contain a Github token with enough permissions to fe
 
 Optional. This input may contain a JSON-stringified record with key/value pairs of usernames. All PRs created by a `key` username will be assigned to the `value` username in cases where the PR creator would otherwise be assigned.
 
-For example, a `pr-creator-assignee-substitutions` value of `"{ "dependabot": "dev123" }"` will assign `dev123` to all PRs where `dependabot` would otherwise have been assigned.
+For example, a `pr-creator-assignee-substitutions` value of `"{ "dependabot[bot]": "dev123" }"` will assign `dev123` to all PRs where `dependabot` would otherwise have been assigned.
 
 This assignee mapping does not affect the assignment of requested reviewers.
 
@@ -57,7 +57,7 @@ jobs:
                   # A github access token with adequate permissions to fetch a PR by number and to change its assignees.
                   token: ${{ secrets.GITHUB_TOKEN }}
                   # Assign all PRs created by dependabot to evdhiggins
-                  pr-creator-assignee-substitutions: '{ "dependabot": "evdhiggins" }'
+                  pr-creator-assignee-substitutions: '{ "dependabot[bot]": "evdhiggins" }'
 ```
 
 If you'd like for this action to only change the assignees for a subset of the supported situations, the triggering events / types can be adjusted to only include the desired situations.

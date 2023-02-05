@@ -15,4 +15,4 @@ jobs:
             - uses: ./
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  pr-creator-assignee-substitutions: '{ "dependabot": "evdhiggins" }'
+                  pr-creator-assignee-substitutions: '{ "dependabot[bot]": "evdhiggins" }'

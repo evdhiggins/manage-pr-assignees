@@ -73,6 +73,12 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
             expect(result.toAssign).toStrictEqual([userOne.login, userTwo.login]);
         });
 
+        test(`Don't include the PR creator in the toUnassign, if they are currently assigned`, () => {
+            const arg = makeArgWithPrValues(userThree, [userOne], [userThree]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+            expect(result.toUnassign).toStrictEqual([]);
+        });
+
         describe(`If no other review requests are outstanding`, () => {
             test(`The PR creator should be assigned to the PR`, () => {
                 const arg = makeArgWithPrValues(userOne, null, [userTwo]);
@@ -108,11 +114,24 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
             expect(result.toUnassign).toStrictEqual([userOne.login]);
         });
 
+        test(`Return a toUnassign array that does not contain the PR creator when additional reviews are pending`, () => {
+            const arg = makeArgWithPrValues(userThree, [userTwo], [userThree]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+            expect(result.toUnassign).toStrictEqual([]);
+        });
+
         describe(`If no other review requests are outstanding`, () => {
             test(`The toAssign array should contain the pr creator`, () => {
                 const arg = makeArgWithPrValues(userOne, null);
                 const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
                 expect(result.toAssign).toStrictEqual([userOne.login]);
+            });
+
+            test(`If the PR creator is already assigned, toAssign & toUnassign should both be empty`, () => {
+                const arg = makeArgWithPrValues(userOne, null, [userOne]);
+                const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+                expect(result.toAssign).toStrictEqual([]);
+                expect(result.toUnassign).toStrictEqual([]);
             });
 
             test(`If the PR is created by a user included in the assignee substitutions, the substituted user should be assigned`, () => {
@@ -143,11 +162,24 @@ describe(determineAssigneesForPrAndThrowIfNoCreator.name, () => {
             expect(result.toUnassign).toStrictEqual([userOne.login]);
         });
 
+        test(`Return a toUnassign array that does not contain the PR creator when additional reviews are pending`, () => {
+            const arg = makeArgWithPrValues(userThree, [userTwo], [userThree]);
+            const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+            expect(result.toUnassign).toStrictEqual([]);
+        });
+
         describe(`If no other review requests are outstanding`, () => {
             test(`The toAssign array should only contain the pr creator`, () => {
                 const arg = makeArgWithPrValues(userOne, null);
                 const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
                 expect(result.toAssign).toStrictEqual([userOne.login]);
+            });
+
+            test(`If the PR creator is already assigned, toAssign & toUnassign should both be empty`, () => {
+                const arg = makeArgWithPrValues(userOne, null, [userOne]);
+                const result = determineAssigneesForPrAndThrowIfNoCreator(arg);
+                expect(result.toAssign).toStrictEqual([]);
+                expect(result.toUnassign).toStrictEqual([]);
             });
 
             test(`If the PR is created by a user included in the assignee substitutions, the substituted user should be assigned`, () => {
